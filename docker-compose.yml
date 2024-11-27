@@ -1,0 +1,22 @@
+services:
+  yandex-captcha-puzzle-solver :
+    build:
+      args:
+        #CHROME_VERSION: '131.'
+        UID: 1001
+        # CHROME_DISABLE_GPU: true
+        # CHECK_SYSTEM: true
+        # PYTHON_VERSION: 3.11
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      UNUSED: false
+      DEBUG: true
+      VERBOSE: true
+    container_name: yandex-captcha-puzzle-solver
+    image: yandex-captcha-puzzle-solver:latest
+    ports:
+      - 20081:8080
+    #volumes:
+      #- ./var:/opt/yandex_captcha_puzzle_solver/var/
+      #< Uncomment if you persistent logs between runs

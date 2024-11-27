@@ -1,0 +1,28 @@
+[build-system]
+requires = [
+  'setuptools>=45.0',
+  'setuptools-scm'
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yandex_captcha_puzzle_solver"
+version = "0.1.1"
+authors = [
+  {name = "yoori", email = "yuri.kuznecov@gmail.com"}
+]
+
+description = ""
+readme = "README.md"
+license = {text = 'GNU Lesser General Public License'}
+requires-python = ">=3.9"
+dynamic = ["dependencies"]
+
+[project.urls]
+homepage = "https://github.com/yoori/flare-bypasser"
+
+[options]
+package_dir = "src/yandex_captcha_puzzle_solver"
+
+[project.scripts]
+yandex_captcha_puzzle_solve_server = "yandex_captcha_puzzle_solver:server_run"

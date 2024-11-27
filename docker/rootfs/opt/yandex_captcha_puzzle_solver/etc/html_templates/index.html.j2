@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <script src="https://smartcaptcha.yandexcloud.net/captcha.js" defer></script>
+  </head>
+  <body>
+    <form action="/send_captcha" method="get">
+
+      <input type="hidden" name="solver_intercept" value="1"/>
+
+      <div data-sitekey="{{yandex_captcha_key}}" data-js-yandex-captcha=""
+        id="captcha-container" class="smart-captcha">
+        <div data-js-captcha-container=""></div>
+          <input id="yandexCaptcha" type="hidden" tabindex="-1" required="" data-js-input-required="true" value=""/>
+        <div role="tooltip" class="form__msg" data-js-form-input-msg="" data-css-reason="Причина ошибки"></div>
+      </div>
+
+      <button draggable="false" type="submit" id="submit_captcha_button">
+        <span class="btn__label">Send</span>
+      </button>
+    </form>
+  </body>
+</html>
