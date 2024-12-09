@@ -9,7 +9,6 @@ import platform
 import uuid
 import pathlib
 import traceback
-import importlib
 import logging
 import argparse
 import urllib3.util
@@ -30,6 +29,8 @@ else:
   import uvicorn.main
 
 # Remove requirement for Content-Type header presence.
+
+
 class RemoveContentTypeRequirementMiddleware(object):
   def __init__(self, app):
     self._app = app
@@ -37,7 +38,7 @@ class RemoveContentTypeRequirementMiddleware(object):
   async def __call__(self, scope, receive, send):
     headers = scope["headers"]
     content_type_found = False
-    for header_index, header in enumerate(headers) :
+    for header_index, header in enumerate(headers):
       if not isinstance(header, tuple) or len(header) != 2:
         # Unexpected headers format - don't make something.
         content_type_found = True
@@ -50,6 +51,7 @@ class RemoveContentTypeRequirementMiddleware(object):
       headers.append((b'content-type', b'application/json'))
 
     return await self._app(scope, receive, send)
+
 
 server = fastapi.FastAPI(
   openapi_url='/docs/openapi.json',
@@ -96,8 +98,8 @@ class HandleCommandResponseSolution(pydantic.BaseModel):
   status: str
   url: str
   cookies: list[CookieModel] = pydantic.Field(default=[], description='Cookies got after solving')
-  userAgent: typing.Optional[str] = None
-  response: typing.Optional[typing.Any] = None
+  user_agent: typing.Optional[str] = None
+  token: typing.Optional[str] = None
 
 
 class HandleCommandResponse(pydantic.BaseModel):
@@ -166,9 +168,9 @@ async def process_solve_request(
           CookieModel(**cookie) for cookie in solve_response.cookies
         ],
         # < pass cookies as dict's (solver don't know about rest model).
-        userAgent=solve_response.user_agent,
+        user_agent=solve_response.user_agent,
         message=solve_response.message,
-        response=solve_response.response
+        token=solve_response.token
       )
     )
 
@@ -218,6 +220,7 @@ async def Get_cookies_after_solve(
     proxy=proxy,
   )
 
+
 def server_run():
   try:
     logging.basicConfig(
@@ -243,7 +246,8 @@ def server_run():
       epilog='Other arguments will be passed to gunicorn or uvicorn(win32) as is.')
     parser.add_argument("-b", "--bind", type=str, default='127.0.0.1:8000')
     # < parse for pass to gunicorn as is and as "--host X --port X" to uvicorn
-    parser.add_argument("--proxy-listen-start-port", type=int, default=10000,
+    parser.add_argument(
+      "--proxy-listen-start-port", type=int, default=10000,
       help="""Port interval start, that can be used for up local proxies on request processing"""
     )
     parser.add_argument(
@@ -274,8 +278,8 @@ def server_run():
 
     if args.verbose:
       logging.getLogger('zendriver.core.browser').setLevel(logging.DEBUG)
-      logging.getLogger('uc.connection').setLevel(logging.DEBUG)
       logging.getLogger('yandex_captcha_puzzle_solver.yandex_captcha_puzzle_solver').setLevel(logging.DEBUG)
+      logging.getLogger('uc.connection').setLevel(logging.INFO)
 
     global solver_args
 

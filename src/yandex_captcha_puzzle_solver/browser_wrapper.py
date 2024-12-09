@@ -17,11 +17,13 @@ XVFB_DISPLAY = None
 
 logger = logging.getLogger(__name__)
 
+
 class Rect(object):
   left: int
   top: int
   width: int
   height: int
+
 
 """
 Trivial wrapper for browser (driver).
@@ -38,7 +40,7 @@ class BrowserWrapper(object):
     center = None
 
     def __init__(self, center):
-      self.center = tuple(center)
+      self.center = tuple(float(x) for x in center)
 
   class FakeNode(object):
     attributes = None
@@ -134,9 +136,9 @@ class BrowserWrapper(object):
       shutil.rmtree(self._user_data_dir, ignore_errors=True)
       self._user_data_dir = None
 
-  async def title(self):
+  async def select_text(self, css_selector):
     try:
-      res = await self._page.select("title", timeout=0)
+      res = await self._page.select(css_selector, timeout=0)
       return res.text
     except asyncio.TimeoutError:
       return None
@@ -154,6 +156,14 @@ class BrowserWrapper(object):
         await tab.close()
     self._page = await self._zendriver_driver.get(url)
 
+  async def click(self, css_selector):
+    try:
+      element = await self._page.select(css_selector, timeout=0)
+    except asyncio.TimeoutError:
+      return False
+    await element.click()
+    return True
+
   async def click_coords(self, coords):
     # Specific workaround for zendriver
     # click by coordinates without no driver patching.
@@ -166,40 +176,23 @@ class BrowserWrapper(object):
       print("EXCEPTION on click_coords '" + step + "': " + str(e))
       raise
 
-  async def mouse_drag_coords(self, start_coords, end_coords):
-    # Specific workaround for zendriver
-    # click by coordinates without no driver patching.
-    step = "start"
+  async def mouse_down(self):
     try:
-      fake_node = BrowserWrapper.FakeElement(self._page, start_coords)
-      step = "mouse_down"
-      await fake_node.mouse_drag(end_coords, steps=10)
-    except Exception as e:
-      print("EXCEPTION on click_coords '" + step + "': " + str(e))
-      raise
-
-  async def mouse_down(self, coords):
-    try:
-      fake_node = BrowserWrapper.FakeElement(self._page, coords)
-      #print("fake_node: " + str(fake_node))
-      #print("fake_node.mouse_down: " + str(fake_node.mouse_down))
-      await fake_node.mouse_down()
+      await self._page.mouse.down()
     except Exception as e:
       print("EXCEPTION on mouse_down: " + str(e) + ":\n" + traceback.format_exc())
       raise
 
-  async def mouse_up(self, coords):
+  async def mouse_up(self):
     try:
-      fake_node = BrowserWrapper.FakeElement(self._page, coords)
-      await fake_node.mouse_up()
+      await self._page.mouse.up()
     except Exception as e:
       print("EXCEPTION on mouse_up: " + str(e))
       raise
 
   async def mouse_move(self, coords):
     try:
-      fake_node = BrowserWrapper.FakeElement(self._page, coords)
-      await fake_node.mouse_move(release=False)
+      await self._page.mouse.move(coords[0], coords[1])
     except Exception as e:
       print("EXCEPTION on mouse_move: " + str(e))
       raise
@@ -211,7 +204,8 @@ class BrowserWrapper(object):
     res_dom = await self._page.get_content()
     return (res_dom if res_dom is not None else "")  # zendriver return None sometimes (on error)
 
-  async def get_element_screenshot(self, css_selector) -> tuple[np.array, Rect] :  # Return screenshot as cv2 image (numpy array)
+  async def get_element_screenshot(self, css_selector) -> tuple[np.array, Rect]:
+    # < Return screenshot as cv2 image (numpy array)
     tmp_file_path = None
 
     try:
@@ -225,7 +219,7 @@ class BrowserWrapper(object):
 
       try:
         logger.info("To get position for '" + css_selector + "'")
-        pos = await element.get_position() # abs=True don't works
+        pos = await element.get_position()  # abs=True don't works
       finally:
         logger.info("From get position for '" + css_selector + "'")
       rect = Rect()
@@ -246,13 +240,12 @@ class BrowserWrapper(object):
         #   "Could not find object with given id" - element dissappeared, js on page changed DOM.
         #
         msg = str(e).lower()
-        logger.info("XXX process '" + msg + "'")
-        if ("not finished loading yet" not in msg and
+        if (
+          "not finished loading yet" not in msg and
           "cannot take screenshot " not in msg and
           "could not find object" not in msg and
           "could not find position" not in msg
-          ):
-          logger.info("XXX reraise '" + msg + "'")
+        ):
           raise
       return (None, None)
     finally:

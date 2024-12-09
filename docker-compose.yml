@@ -11,7 +11,7 @@ services:
       dockerfile: Dockerfile
     environment:
       UNUSED: false
-      DEBUG: true
+      # DEBUG: true
       VERBOSE: true
     container_name: yandex-captcha-puzzle-solver
     image: yandex-captcha-puzzle-solver:latest
