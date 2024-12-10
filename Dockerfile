@@ -31,7 +31,9 @@ COPY utils/linux_chrome_deb_repo_installer.sh ./linux_chrome_deb_repo_installer.
 
 # If CHROME_VERSION ins't defined obviously use tested version by platform.
 RUN if [ "$CHROME_VERSION" = "" ] ; then \
-  if [ "$(arch)" != "x86_64" ] ; then echo 'CHROME_VERSION="120."' >>/tmp/build.env ; \
+  BUILD_ARCH="$(arch)" ; \
+  if [ "$BUILD_ARCH" = "arm64" ] ; then echo 'CHROME_VERSION="120."' >>/tmp/build.env ; \
+  elif [ "$BUILD_ARCH" = "aarch64" -o "$BUILD_ARCH" = "armv7l" ] ; then echo 'CHROME_VERSION="130."' >>/tmp/build.env ; \
   else echo 'CHROME_VERSION="131."' >>/tmp/build.env ; \
   fi ; \
   else echo 'CHROME_VERSION="'"$CHROME_VERSION"'"' >>/tmp/build.env ; \
