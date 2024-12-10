@@ -112,7 +112,8 @@ RUN if [ "$UID" -ne 0 ] ; then echo '%sudo ALL=(ALL:ALL) NOPASSWD:ALL' >/etc/sud
 
 WORKDIR /app
 
-RUN apt-get update && apt install -y --no-install-recommends python3-opencv python3-numpy
+RUN apt-get update && \
+  apt install -y --no-install-recommends python3-opencv python3-numpy python3-cffi
 
 COPY . yandex_captcha_puzzle_solver
 RUN ADDITIONAL_PYTHONPATH="$PYTHONPATH" pip install --prefer-binary yandex_captcha_puzzle_solver/
