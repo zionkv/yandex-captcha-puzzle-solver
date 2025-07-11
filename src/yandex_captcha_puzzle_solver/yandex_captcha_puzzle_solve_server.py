@@ -75,10 +75,6 @@ solver_args = {
   'debug_dir': None
 }
 
-# Simple in-memory queue for compatibility API
-_tasks: dict[str, typing.Optional[HandleCommandResponse]] = {}
-_task_counter = 0
-
 
 class ProxyModel(pydantic.BaseModel):
   url: str = pydantic.Field(default=None, description='Proxy url')
@@ -112,6 +108,10 @@ class HandleCommandResponse(pydantic.BaseModel):
   startTimestamp: float
   endTimestamp: float
   solution: typing.Optional[HandleCommandResponseSolution] = None
+
+# Simple in-memory queue for compatibility API
+_tasks: dict[str, typing.Optional[HandleCommandResponse]] = {}
+_task_counter = 0
 
 
 async def process_solve_request(
