@@ -20,7 +20,77 @@ YANDEX KEY you can get from source code of target page, usualy it starts with **
 
 Response example:
 
-    {"status":"ok","message":"Challenge solved!","startTimestamp":1733819749.824522,"endTimestamp":1733819774.119855,"solution":{"status":"ok","url":"<MY SITE>","cookies":[{"name":"receive-cookie-deprecation","value":"1","domain":".yandex.ru","path":"/","secure":true},{"name":"session-cookie","value":"180fc3e2fb41df94e50241d9d00b084574552116189d7515109f2424d43b405a76cd9ae4255944b2d868fe358dc27d53","domain":".some.domain","path":"/","secure":false}],"user_agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36","token":"dD0xNzMzODE5NzY3O2k9MjE3LjY1LjIuMjI5O0Q9NzAzQzI4OTlFRDBFQTBFRTM1ODE3MUFBMzRFMkFDRURDQkQzQTlFMDgwMzM4QjMzRDJEODlDMTczMTEyQTk5ODZDODkyMEQxNzA4QTBFN0I4MTkxQzVCRkQ3RjRDMzExQ0E3Qjg1NkRDOEM4MDZENTFEM0JERENFODUzNzlEMTYzODY2MkM5RDg2RjIwQUEwNzc7dT0xNzMzODE5NzY3NTk4OTEyNjU3O2g9ZjI3ZWY0OWUxZmUyN2EzNWQ4OTNmM2IzYzM5YTQwNWU="}}
+    {
+      "status": "ok",
+      "message": "Challenge solved!",
+      "startTimestamp": 1733819749.824522,
+      "endTimestamp": 1733819774.119855,
+      "solution": {
+        "status": "ok",
+        "url": "<MY SITE>",
+        "cookies": [
+          {"name": "receive-cookie-deprecation", "value": "1", "domain": ".yandex.ru", "path": "/", "secure": true},
+          {"name": "session-cookie", "value": "180fc3e2fb41df94e50241d9d00b084574552116189d7515109f2424d43b405a76cd9ae4255944b2d868fe358dc27d53", "domain": ".some.domain", "path": "/", "secure": false}
+        ],
+        "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      "token": "dD0xNzMzODE5NzY3O2k9MjE3LjY1LjIuMjI5O0Q9NzAzQzI4OTlFRDBFQTBFRTM1ODE3MUFBMzRFMkFDRURDQkQzQTlFMDgwMzM4QjMzRDJEODlDMTczMTEyQTk5ODZDODkyMEQxNzA4QTBFN0I4MTkxQzVCRkQ3RjRDMzExQ0E3Qjg1NkRDOEM4MDZENTFEM0JERENFODUzNzlEMTYzODY2MkM5RDg2RjIwQUEwNzc7dT0xNzMzODE5NzY3NTk4OTEyNjU3O2g9ZjI3ZWY0OWUxZmUyN2EzNWQ4OTNmM2IzYzM5YTQwNWU="
+      }
+    }
+
+## API endpoints
+
+In addition to the synchronous `/get_token` route the service exposes an
+experimental asynchronous API compatible with **monstro** and **webvisitor**
+clients.
+
+### `POST /createTask`
+
+Creates a new captcha solving task. The request body is identical to the one
+used with `/get_token`.
+
+Example:
+
+```bash
+curl -XPOST 'http://localhost:20081/createTask' \
+  -H 'Content-Type: application/json' \
+  --data-raw '{"url":"SITE","yandex_key":"YANDEX KEY"}'
+```
+
+Response:
+
+```json
+{"errorId":0,"taskId":"123"}
+```
+
+### `POST /getTaskResult`
+
+Retrieves the result for a previously created task.
+
+Example:
+
+```bash
+curl -XPOST 'http://localhost:20081/getTaskResult' \
+  -H 'Content-Type: application/json' \
+  --data-raw '{"taskId":"123"}'
+```
+
+Successful response mirrors the one returned by `/get_token`:
+
+```json
+{"status":"ready","solution":{"token":"..."}}
+```
+
+### `GET /getBalance`
+
+Returns remaining balance (always `0` for the open-source version):
+
+```bash
+curl 'http://localhost:20081/getBalance'
+```
+
+```json
+{"balance":0}
+```
 
 ## Installation
 
