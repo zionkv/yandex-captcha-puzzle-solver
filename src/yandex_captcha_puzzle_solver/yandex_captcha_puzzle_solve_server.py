@@ -75,6 +75,10 @@ solver_args = {
   'debug_dir': None
 }
 
+# Simple in-memory queue for compatibility API
+_tasks: dict[str, typing.Optional[HandleCommandResponse]] = {}
+_task_counter = 0
+
 
 class ProxyModel(pydantic.BaseModel):
   url: str = pydantic.Field(default=None, description='Proxy url')
@@ -221,6 +225,85 @@ async def Get_cookies_after_solve(
   )
 
 
+# Compatibility API
+async def _solve_background(task_id: str, **kwargs):
+  global _tasks
+  result = await process_solve_request(**kwargs)
+  _tasks[task_id] = result
+
+
+@server.post('/in.php')
+async def create_task(request: fastapi.Request, background_tasks: fastapi.BackgroundTasks):
+  params = dict(request.query_params)
+  if request.headers.get('content-type', '').startswith('application/json'):
+    params.update(await request.json())
+  else:
+    try:
+      form = await request.form()
+      params.update(form)
+    except Exception:
+      pass
+
+  url = params.get('pageurl') or params.get('url')
+  yandex_key = (
+    params.get('yandex_key') or params.get('yandexkey') or params.get('sitekey')
+  )
+  cookies = params.get('cookies')
+  if isinstance(cookies, str):
+    try:
+      cookies = fastapi.json.loads(cookies)
+    except Exception:
+      cookies = None
+  max_timeout = int(params.get('maxTimeout') or params.get('max_timeout') or 60000)
+  proxy = params.get('proxy')
+
+  global _task_counter, _tasks
+  _task_counter += 1
+  task_id = str(_task_counter)
+  _tasks[task_id] = None
+
+  background_tasks.add_task(
+    _solve_background,
+    task_id,
+    url=url,
+    yandex_key=yandex_key,
+    cookies=cookies,
+    max_timeout=max_timeout,
+    proxy=proxy,
+  )
+
+  if params.get('json') == '1':
+    return {'status': 1, 'request': task_id}
+  return fastapi.responses.PlainTextResponse('OK|' + task_id)
+
+
+@server.get('/res.php')
+async def get_result(id: str, json: int = 0):
+  if id not in _tasks:
+    if json:
+      return {'status': 0, 'request': 'ERROR_WRONG_ID'}
+    return fastapi.responses.PlainTextResponse('ERROR_WRONG_ID')
+
+  result = _tasks[id]
+  if result is None:
+    if json:
+      return {'status': 0, 'request': 'CAPCHA_NOT_READY'}
+    return fastapi.responses.PlainTextResponse('CAPCHA_NOT_READY')
+
+  token = result.solution.token if result.solution else None
+  if json:
+    return {'status': 1, 'request': token}
+  return fastapi.responses.PlainTextResponse('OK|' + str(token))
+
+
+@server.get('/balance')
+@server.get('/getBalance')
+async def get_balance(json: int = 0):
+  if json:
+    return {'status': 1, 'request': '0'}
+  return fastapi.responses.PlainTextResponse('0')
+
+
 def server_run():
   try:
     logging.basicConfig(
@@ -242,7 +325,7 @@ def server_run():
     )
 
     parser = argparse.ArgumentParser(
-      description='Start yandex captcha puzzle solve server.',
+      description='Start yandex captcha puzzle solve server with /get_token and compatibility /in.php API.',
       epilog='Other arguments will be passed to gunicorn or uvicorn(win32) as is.')
     parser.add_argument("-b", "--bind", type=str, default='127.0.0.1:8000')
     # < parse for pass to gunicorn as is and as "--host X --port X" to uvicorn
