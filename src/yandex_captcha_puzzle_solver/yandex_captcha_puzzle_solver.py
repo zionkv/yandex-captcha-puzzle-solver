@@ -546,14 +546,8 @@ os.environ["REQUESTS_CA_BUNDLE"] = certifi.where()
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
 if __name__ == '__main__':
-  sys.stdout.reconfigure(encoding="utf-8")
-  logger.basicConfig(
-    format='%(asctime)s [%(name)s] [%(levelname)s]: %(message)s',
-    handlers=[logger.StreamHandler(sys.stdout)],
-    level=logging.INFO)
+  async def main() -> None:
+    req = Request({'url': 'https://example.com'})
+    await Solver().solve(req)
 
-  req = Request()
-  req.url = 'https://knopka.ashoo.id'
-
-  solver = Solver()
-  asyncio.run(solver.solve(req))
+  asyncio.run(main())
