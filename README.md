@@ -39,45 +39,36 @@ Response example:
 
 ## API endpoints
 
-In addition to the synchronous `/get_token` route the service exposes an
-experimental asynchronous API compatible with **monstro** and **webvisitor**
-clients.
+The service exposes a synchronous `/get_token` route and a lightweight
+compatibility API similar to those provided by common captcha solvers.
 
-### `POST /createTask`
+### `POST /in.php`
 
-Creates a new captcha solving task. The request body is identical to the one
-used with `/get_token`.
-
-Example:
+Creates a new solving task. Parameters can be passed as query string,
+form data or JSON. Typical usage:
 
 ```bash
-curl -XPOST 'http://localhost:20081/createTask' \
-  -H 'Content-Type: application/json' \
-  --data-raw '{"url":"SITE","yandex_key":"YANDEX KEY"}'
+curl -XPOST 'http://localhost:20081/in.php?json=1&yandexkey=YANDEX_KEY&pageurl=SITE'
 ```
 
-Response:
+The response contains the created task identifier:
 
 ```json
-{"errorId":0,"taskId":"123"}
+{"status":1,"request":"123"}
 ```
 
-### `POST /getTaskResult`
+### `GET /res.php`
 
-Retrieves the result for a previously created task.
-
-Example:
+Retrieves the result of a previously created task.
 
 ```bash
-curl -XPOST 'http://localhost:20081/getTaskResult' \
-  -H 'Content-Type: application/json' \
-  --data-raw '{"taskId":"123"}'
+curl 'http://localhost:20081/res.php?json=1&id=123'
 ```
 
-Successful response mirrors the one returned by `/get_token`:
+If the task is ready the response contains the captcha token:
 
 ```json
-{"status":"ready","solution":{"token":"..."}}
+{"status":1,"request":"TOKEN"}
 ```
 
 ### `GET /getBalance`
@@ -99,22 +90,3 @@ already included within the image.
 
 We provide a `docker-compose.yml` configuration file.
 Clone this repository and execute `docker compose up -d` to start the container.
-
-## Compatibility API
-
-Besides `/get_token` the server exposes simple endpoints similar to popular captcha solvers.
-
-Create a task:
-
-```
-curl 'http://localhost:20081/in.php?json=1&yandexkey=YANDEX_KEY&pageurl=SITE'
-```
-
-Check task result:
-
-```
-curl 'http://localhost:20081/res.php?json=1&id=1'
-```
-
-The `/balance` and `/getBalance` routes always return `0` and can be used by tools
-expecting a balance check.
