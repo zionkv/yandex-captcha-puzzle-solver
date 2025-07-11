@@ -1,4 +1,3 @@
-
 # YandexCaptchaPuzzleSolver
 
 YandexCaptchaPuzzleSolver is a service to bypass Yandex Captcha (Puzzle).
@@ -31,5 +30,21 @@ already included within the image.
 We provide a `docker-compose.yml` configuration file.
 Clone this repository and execute `docker compose up -d` to start the container.
 
+## Compatibility API
 
+Besides `/get_token` the server exposes simple endpoints similar to popular captcha solvers.
 
+Create a task:
+
+```
+curl 'http://localhost:20081/in.php?json=1&yandexkey=YANDEX_KEY&pageurl=SITE'
+```
+
+Check task result:
+
+```
+curl 'http://localhost:20081/res.php?json=1&id=1'
+```
+
+The `/balance` and `/getBalance` routes always return `0` and can be used by tools
+expecting a balance check.
