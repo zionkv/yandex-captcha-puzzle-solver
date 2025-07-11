@@ -556,4 +556,4 @@ if __name__ == '__main__':
   req.url = 'https://knopka.ashoo.id'
 
   solver = Solver()
-  res = solver.solve(req)
+  asyncio.run(solver.solve(req))
